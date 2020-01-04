@@ -26,18 +26,18 @@ decl_module! {
         /// # </weight>
         #[weight = SimpleDispatchInfo::FixedNormal(1_500_000)]
         fn validate_mint(origin, anchor_id: T::Hash, deposit_address: [u8; 20], pfs: Vec<proofs::Proof>) -> Result {
-            ensure_signed(origin)?;
+//            ensure_signed(origin)?;
 
             // get the anchor data from anchor ID
-            let anchor_data = <anchor::Module<T>>::get_anchor_by_id(anchor_id).ok_or("Anchor doesn't exist")?;
+//            let anchor_data = <anchor::Module<T>>::get_anchor_by_id(anchor_id).ok_or("Anchor doesn't exist")?;
 
             // validate proofs
-            ensure!(Self::validate_proofs(anchor_data.get_doc_root(), &pfs), "Invalid proofs");
+//            ensure!(Self::validate_proofs(anchor_data.get_doc_root(), &pfs), "Invalid proofs");
 
             // get the bundled hash
-            let bundled_hash = Self::get_bundled_hash(pfs, deposit_address);
+            //let bundled_hash = Self::get_bundled_hash(pfs, deposit_address);
 
-            Self::deposit_event(RawEvent::DepositAsset(bundled_hash));
+            Self::deposit_event(RawEvent::DepositAsset(anchor_id));
 
             Ok(())
         }
