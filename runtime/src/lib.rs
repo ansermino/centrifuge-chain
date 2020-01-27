@@ -58,6 +58,9 @@ mod proofs;
 /// nft module
 mod nfts;
 
+/// bridge module
+mod bridge;
+
 /// Constant values used within the runtime.
 pub mod constants;
 use constants::{time::*, currency::*};
@@ -540,6 +543,10 @@ impl nfts::Trait for Runtime {
     type Event = Event;
 }
 
+impl bridge::Trait for Runtime {
+	type Event = Event;
+}
+
 construct_runtime!(
 	pub enum Runtime where
 		Block = Block,
@@ -569,6 +576,7 @@ construct_runtime!(
 		Anchor: anchor::{Module, Call, Storage, Event<T>},
 		Fees: fees::{Module, Call, Storage, Event<T>, Config<T>},
 		Nfts: nfts::{Module, Call, Event<T>},
+		Bridge: bridge::{Module, Call, Event<T>},
 	}
 );
 
