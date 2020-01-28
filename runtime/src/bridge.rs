@@ -1,9 +1,18 @@
 use frame_support::{decl_event, decl_module, decl_storage, dispatch::DispatchResult, dispatch::DispatchError, ensure};
 use frame_system::{self as system, ensure_signed, ensure_root};
 use sp_std::vec::Vec;
+use codec::{Decode, Encode};
 // TODO: Replace Vec<u8> with U256 where possible
 use sp_core::U256;
 
+#[derive(Encode, Decode, Default, Clone, PartialEq)]
+pub struct Counter(u32);
+
+impl Counter {
+    fn increment(&mut self) {
+        self.0 = self.0 + 1;
+    }
+}
 
 pub trait Trait: system::Trait {
     type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
@@ -11,7 +20,7 @@ pub trait Trait: system::Trait {
 
 decl_event!(
     pub enum Event<T> where <T as frame_system::Trait>::Hash {
-        AssetTransfer(Vec<u8>, Vec<u8>, Vec<u8>),
+        AssetTransfer(Vec<u8>, u32, Vec<u8>, Vec<u8>, Vec<u8>),
         UselessEvent(Hash),
     }
 );
@@ -19,7 +28,7 @@ decl_event!(
 decl_storage!(
     trait Store for Module<T: Trait> as Bridge {
         EmitterAddress get(emitter_address): Vec<u8>;
-        Chains get(fn chains): map Vec<u8> => Option<Counter>;
+        Chains get(fn chains): map Vec<u8> => Counter;
     }
 );
 
@@ -39,16 +48,21 @@ decl_module!(
         pub fn whitelist_chain(origin, id: Vec<u8>) -> DispatchResult {
             // TODO: Limit access
             ensure_signed(origin)?;
-            <Chains>::insert(&id, true);
+            <Chains>::insert(&id, Counter(0));
             Ok(())
         }
 
         // TODO: Add metadata
-        pub fn transfer_asset(origin, dest_id: Vec<u8>, to: Vec<u8>, token_id: Vec<u8>) -> DispatchResult {
+        pub fn transfer_asset(origin, dest_id: Vec<u8>, to: Vec<u8>, token_id: Vec<u8>, metadata: Vec<u8>) -> DispatchResult {
             ensure_signed(origin)?;
             // Ensure chain is whitelisted
-            ensure!(<Chains>::get(&dest_id), "Chain ID not whitelisted");
-            Self::deposit_event(RawEvent::AssetTransfer(dest_id, to, token_id));
+            ensure!(<Chains>::exists(&dest_id), "Chain ID not whitelisted");
+            let mut counter = <Chains>::get(&dest_id);
+            Self::deposit_event(RawEvent::AssetTransfer(dest_id.clone(), counter.0, to, token_id, metadata));
+
+            // Increment counter and store
+            counter.increment();
+            <Chains>::insert(&dest_id, counter);
             Ok(())
         }
     }
@@ -106,7 +120,7 @@ mod tests {
     }
 
     fn new_test_ext() -> sp_io::TestExternalities {
-        let mut t = frame_system::GenesisConfig::default()
+        let t = frame_system::GenesisConfig::default()
             .build_storage::<Test>()
             .unwrap();
 
@@ -122,23 +136,15 @@ mod tests {
     }
 
     #[test]
-    fn whitelist_chain() {
-        new_test_ext().execute_with(|| {
-            let chain_id = vec![1];
-            assert_ok!(Bridge::whitelist_chain(Origin::signed(1), chain_id.clone()));
-            assert!(Bridge::chains(chain_id));
-        })
-    }
-
-    #[test]
     fn asset_transfer_success() {
         new_test_ext().execute_with(|| {
             let chain_id = vec![1];
             let to = vec![2];
             let token_id = vec![3];
+            let metadata = vec![];
 
             assert_ok!(Bridge::whitelist_chain(Origin::signed(1), chain_id.clone()));
-            assert_ok!(Bridge::transfer_asset(Origin::signed(1), chain_id, to, token_id));
+            assert_ok!(Bridge::transfer_asset(Origin::signed(1), chain_id, to, token_id, metadata));
             // TODO: Assert event
         })
     }
@@ -148,11 +154,12 @@ mod tests {
         new_test_ext().execute_with(|| {
             let chain_id = vec![1];
             let to = vec![2];
-            let dest_id = vec![3];
+            let bad_dest_id = vec![3];
             let token_id = vec![4];
+            let metadata = vec![];
 
-            assert_ok!(Bridge::whitelist_chain(Origin::signed(1), chain_id.clone()));
-            assert_err!(Bridge::transfer_asset(Origin::signed(1), vec![2], to, token_id), "Chain ID not whitelisted");
+            assert_ok!(Bridge::whitelist_chain(Origin::signed(1), chain_id));
+            assert_err!(Bridge::transfer_asset(Origin::signed(1), bad_dest_id, to, token_id, metadata), "Chain ID not whitelisted");
         })
     }
 }
