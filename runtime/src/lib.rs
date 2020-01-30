@@ -576,7 +576,7 @@ construct_runtime!(
 		Anchor: anchor::{Module, Call, Storage, Event<T>},
 		Fees: fees::{Module, Call, Storage, Event<T>, Config<T>},
 		Nfts: nfts::{Module, Call, Event<T>},
-		Bridge: bridge::{Module, Call, Event<T>},
+		Bridge: bridge::{Module, Call, Storage, Event<T>},
 	}
 );
 

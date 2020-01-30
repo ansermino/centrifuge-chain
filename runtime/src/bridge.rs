@@ -1,13 +1,12 @@
-use frame_support::{decl_event, decl_module, decl_storage, dispatch::DispatchResult, dispatch::DispatchError, ensure};
-use frame_system::{self as system, ensure_signed, ensure_root};
+use frame_support::{decl_event, decl_module, decl_storage, dispatch::DispatchResult, ensure};
+use frame_system::{self as system, ensure_signed};
 use sp_std::vec::Vec;
 use codec::{Decode, Encode};
-// TODO: Replace Vec<u8> with U256 where possible
-use sp_core::U256;
 
 #[derive(Encode, Decode, Default, Clone, PartialEq)]
 pub struct Counter(u32);
 
+/// Tracks deposit count for an associated chain
 impl Counter {
     fn increment(&mut self) {
         self.0 = self.0 + 1;
@@ -20,6 +19,7 @@ pub trait Trait: system::Trait {
 
 decl_event!(
     pub enum Event<T> where <T as frame_system::Trait>::Hash {
+        // dest_id, deposit_id, to, token_id, metadata
         AssetTransfer(Vec<u8>, u32, Vec<u8>, Vec<u8>, Vec<u8>),
         UselessEvent(Hash),
     }
@@ -37,7 +37,7 @@ decl_module!(
         // Default method for emitting events
         fn deposit_event() = default;
 
-        // Implicitly checks origin as root
+        /// Sets the address used to identify this chain
         pub fn set_address(origin, addr: Vec<u8>) -> DispatchResult {
             // TODO: Limit access
             ensure_signed(origin)?;
@@ -45,6 +45,7 @@ decl_module!(
             Ok(())
         }
 
+        /// Enables a chain ID as a destination for a bridge transfer
         pub fn whitelist_chain(origin, id: Vec<u8>) -> DispatchResult {
             // TODO: Limit access
             ensure_signed(origin)?;
@@ -52,8 +53,9 @@ decl_module!(
             Ok(())
         }
 
-        // TODO: Add metadata
+        /// Commits an asset transfer to the chain as an event to be acted on by the bridge.
         pub fn transfer_asset(origin, dest_id: Vec<u8>, to: Vec<u8>, token_id: Vec<u8>, metadata: Vec<u8>) -> DispatchResult {
+            // TODO: Limit access
             ensure_signed(origin)?;
             // Ensure chain is whitelisted
             ensure!(<Chains>::exists(&dest_id), "Chain ID not whitelisted");
@@ -75,7 +77,7 @@ mod tests {
     use sp_core::H256;
     use sp_runtime::{
         testing::Header,
-        traits::{BadOrigin, BlakeTwo256, Hash, IdentityLookup},
+        traits::{BlakeTwo256, IdentityLookup},
         Perbill,
     };
     use frame_support::{assert_err, assert_ok, impl_outer_origin, parameter_types, weights::Weight};
