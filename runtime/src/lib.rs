@@ -59,7 +59,7 @@ mod proofs;
 mod nfts;
 
 /// bridge module
-mod bridge;
+pub use chainbridge_substrate as bridge;
 
 /// Constant values used within the runtime.
 pub mod constants;
