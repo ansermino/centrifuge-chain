@@ -61,7 +61,7 @@ pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/parityt
 # other substrate dependencies
 node-runtime = { git = "https://github.com/paritytech/substrate.git", rev = "ddb309ae7c70e5e51a60879af18819cf28be4a32", default-features = false }
 
-chainbridge-substrate = { git = "https://github.com/ChainSafe/chainbridge-substrate", default-features = false}
+chainbridge-substrate = { git = "https://github.com/ChainSafe/chainbridge-substrate", rev = "981c4bd2e7c969b2fdc0f6d52237697ed4d5fd9c", default-features = false}
 
 [build-dependencies]
 wasm-builder-runner = { package = "substrate-wasm-builder-runner", git = "https://github.com/paritytech/substrate.git", rev = "ddb309ae7c70e5e51a60879af18819cf28be4a32", version = "1.0.4" }
